@@ -1,17 +1,12 @@
-const { Client } = require('pg');
+import { getClient } from '../src/lib/server/db';
 
-const client = new Client({
-  user: 'admin',
-  host: 'localhost',
-  database: 'acme',
-  password: 'password',
-  port: 5435,
-});
+const client = getClient();
 
 client
   .connect()
   .then(() => {
     // Execute the query
+
     return client.query(
       "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'public';",
     );
