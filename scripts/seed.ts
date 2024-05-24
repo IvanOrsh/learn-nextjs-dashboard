@@ -1,4 +1,3 @@
-// const { db } = require('@vercel/postgres');
 import { Client } from 'pg';
 import {
   customers,
@@ -7,8 +6,6 @@ import {
   users,
 } from '../src/lib/placeholder-data';
 import { getClient } from '../src/lib/server/db';
-// const bcrypt = require('bcrypt');
-const bcrypt = Bun.password;
 
 async function seedUsers(client: Client) {
   try {
@@ -27,7 +24,10 @@ async function seedUsers(client: Client) {
     // Insert data into the "users" table
     const insertedUsers = await Promise.all(
       users.map(async (user) => {
-        const hashedPassword = await bcrypt.hash(user.password, 'argon2d');
+        const hashedPassword = await Bun.password.hash(user.password, {
+          algorithm: 'argon2d',
+          timeCost: 2,
+        });
 
         return client.query(
           `
