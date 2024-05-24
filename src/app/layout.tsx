@@ -1,3 +1,6 @@
+import clsx from 'clsx';
+
+import { fontSans } from './fonts';
 import './global.css';
 
 export default function RootLayout({
@@ -6,7 +9,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={clsx('antialiased', fontSans.variable)}>
       <body>{children}</body>
     </html>
   );

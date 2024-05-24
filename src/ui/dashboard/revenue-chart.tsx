@@ -1,5 +1,4 @@
 import { Revenue } from '@/lib/definitions';
-import { lusitana } from '@/ui/fonts';
 
 // This component is representational only.
 // For data visualization UI, check out:
@@ -23,9 +22,7 @@ export default async function RevenueChart({
 
   return (
     <div className="w-full md:col-span-4">
-      <h2 className={`${lusitana.className} mb-4 text-xl md:text-2xl`}>
-        Recent Revenue
-      </h2>
+      <h2 className="mb-4 font-serif text-xl md:text-2xl">Recent Revenue</h2>
       {/* NOTE: comment in this code when you get to this point in the course */}
 
       {/* <div className="rounded-xl bg-gray-50 p-4">
