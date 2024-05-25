@@ -1,4 +1,4 @@
-import { Client, QueryResult } from 'pg';
+import { Client } from 'pg';
 
 import config from './config';
 
@@ -16,10 +16,10 @@ export function getClient(): Client {
   return client;
 }
 
-export async function sql(
+export async function sql<T>(
   sql: string,
   values?: any[],
-): Promise<QueryResult<any>> {
+): Promise<{ rows: T[]; rowCount: number; command: string; oid: number }> {
   const client = getClient();
 
   await client.connect();
