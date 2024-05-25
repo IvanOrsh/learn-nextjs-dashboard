@@ -8,10 +8,15 @@ import {
 import clsx from 'clsx';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { ReactNode } from 'react';
 
 // Map of links to display in the side navigation.
 // Depending on the size of the application, this would be stored in a database.
-const links = [
+const links: {
+  name: string;
+  href: '/dashboard' | '/dashboard/invoices' | '/dashboard/customers';
+  icon: (props: React.ComponentProps<'svg'>) => ReactNode;
+}[] = [
   { name: 'Home', href: '/dashboard', icon: HomeIcon },
   {
     name: 'Invoices',
