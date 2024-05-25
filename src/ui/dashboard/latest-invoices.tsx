@@ -1,14 +1,12 @@
 import clsx from 'clsx';
 import Image from 'next/image';
 
-import { LatestInvoice } from '@/lib/definitions';
+import { fetchLatestInvoices } from '@/lib/data';
 import { ArrowPathIcon } from '@heroicons/react/24/outline';
 
-export default async function LatestInvoices({
-  latestInvoices,
-}: {
-  latestInvoices: LatestInvoice[];
-}) {
+export default async function LatestInvoices() {
+  const latestInvoices = await fetchLatestInvoices();
+
   return (
     <div className="flex w-full flex-col md:col-span-4">
       <h2 className="mb-4 font-serif text-xl md:text-2xl">Latest Invoices</h2>
