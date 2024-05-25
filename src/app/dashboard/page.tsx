@@ -1,10 +1,7 @@
-import clsx from 'clsx';
-
 import { fetchCardData, fetchLatestInvoices, fetchRevenue } from '@/lib/data';
 import { Card } from '@/ui/dashboard/cards';
 import LatestInvoices from '@/ui/dashboard/latest-invoices';
 import RevenueChart from '@/ui/dashboard/revenue-chart';
-import { fontSerif } from '../fonts';
 
 export default async function Page() {
   const [
@@ -24,14 +21,7 @@ export default async function Page() {
 
   return (
     <main>
-      <h1
-        className={clsx(
-          'mb-4 font-serif text-xl md:text-2xl',
-          fontSerif.variable,
-        )}
-      >
-        Dashboard
-      </h1>
+      <h1 className="mb-4 font-serif text-xl md:text-2xl">Dashboard</h1>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <Card title="Collected" value={totalPaidInvoices} type="collected" />
         <Card title="Pending" value={totalPendingInvoices} type="pending" />
