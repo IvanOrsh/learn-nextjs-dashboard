@@ -16,15 +16,23 @@ export function getClient(): Client {
   return client;
 }
 
+function sqlQuery(
+  strings: TemplateStringsArray,
+  ...values: any[]
+): { text: string; values: any[] } {
+  const text = strings.reduce((prev, current, i) => prev + '$' + i + current);
+  return { text, values };
+}
+
 export async function sql<T>(
-  sql: string,
-  values?: any[],
+  strings: TemplateStringsArray,
+  ...values: any[]
 ): Promise<{ rows: T[]; rowCount: number; command: string; oid: number }> {
   const client = getClient();
 
   await client.connect();
-  const res = await client.query(sql, values);
-
+  const query = sqlQuery(strings, ...values);
+  const res = await client.query(query.text, query.values);
   await client.end();
 
   return res;

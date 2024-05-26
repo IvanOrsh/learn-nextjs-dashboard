@@ -118,7 +118,6 @@ export default function NavLinks() {
 
 ## 4. Just in case: `psql`
 
-
 To connect to a PostgreSQL database using the `psql` command-line client, you'll need the following information:
 
 1. Hostname or IP address: The address where the PostgreSQL server is running.
@@ -186,3 +185,95 @@ SELECT * FROM table_name;
 ```bash
 \x
 ```
+
+## 5. Totally unrelated: Tagged Template Literals
+
+This is a feature in JavaScript / Typescript called **"tagged template literals"**. This feature allow you to define a function that process a template literal in a special way.
+
+### How Tagged Template Literals Work
+
+When you use a tagged template literal, it invokes a special type of function (called a "tag function") with a specific set of arguments that represent the template literal. The arguments passed to this function include:
+
+1. **Template Strings Array**: An array of literal strings from the template.
+2. **Substitution Values**: The values of the expressions interpolated within the template.
+
+#### Step 1: Define the Tag Function
+
+A tag function is defined to handle the template literal. This function receives the template strings and the substitution values.
+
+```ts
+function tagFunction(strings: TemplateStringsArray, ...values: any[]): { text: string; values: any[] } {
+  const text = strings.reduce((prev, current, i) => prev + '$' + i + current);
+  return { text, values };
+}
+```
+
+#### Step 2: Use the Tag Function with a Template Literal
+
+When you use the tag function with a template literal, it processes the template and the interpolated expressions.
+
+```ts
+const name = "world";
+const result = tagFunction`Hello, ${name}!`;
+// result is { text: "Hello, $0!", values: ["world"] }
+```
+
+### How the Arguments Are Passed
+
+When the tag function `tagFunction` is invoked with the template literal `` `Hello, ${name}!` ``, it receives:
+
+1. **strings**: An array of strings: `["Hello, ", "!"]`
+2. **values**: An array of substitution values: `["world"]`
+
+The `tagFunction` then processes these arrays to produce the final result.
+
+### Using Tagged Template Literals for SQL Queries
+
+To use this with SQL queries, you can create a tag function that constructs a parameterized query:
+
+1. **Template Strings Array**: Holds the static parts of the SQL query.
+2. **Substitution Values**: Holds the dynamic parts of the SQL query (parameters).
+
+Here's the complete example again with explanations:
+
+```ts
+import { Client } from 'pg';
+
+// Tag function to handle SQL query construction
+function sqlQuery(strings: TemplateStringsArray, ...values: any[]): { text: string, values: any[] } {
+  // Combine the strings with placeholders for values
+  const text = strings.reduce((prev, current, i) => prev + '$' + i + current);
+  return { text, values };
+}
+
+// Modified sql function to use tagged template literals
+export async function sql<T>(
+  strings: TemplateStringsArray,
+  ...values: any[]
+): Promise<{ rows: T[]; rowCount: number; command: string; oid: number }> {
+  const client = new Client();
+  
+  await client.connect();
+  const query = sqlQuery(strings, ...values);
+  const res = await client.query(query.text, query.values);
+  await client.end();
+
+  return res;
+}
+
+// Usage example
+const query = 'some_query_string';
+const count = await sql<{ count: string }>`
+  SELECT COUNT(*)
+  FROM invoices
+  JOIN customers ON invoices.customer_id = customers.id
+  WHERE
+    customers.name ILIKE ${`%${query}%`} OR
+    customers.email ILIKE ${`%${query}%`} OR
+    invoices.amount::text ILIKE ${`%${query}%`} OR
+    invoices.date::text ILIKE ${`%${query}%`} OR
+    invoices.status ILIKE ${`%${query}%`}
+`;
+```
+
+##
