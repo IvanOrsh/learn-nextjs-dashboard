@@ -276,4 +276,126 @@ const count = await sql<{ count: string }>`
 `;
 ```
 
-##
+## 6. Mutating Data
+
+### Create Invoice Example:
+
+1. Create a form to capture the user's input.
+2. Create a server action and invoke it from the form.
+3. Inside your server action, extract the data from the `formData` object.
+4. Validate and prepare the data to be inserted into your database.
+5. Insert the data and handle any errors.
+6. **Revalidate the cache** and redirect the user back to invoices page. 
+
+```tsx
+// Server Component
+export default function Page() {
+  // Action
+  async function create(formData: FormData) {
+    'use server';
+ 
+    // Logic to mutate data...
+  }
+ 
+  // Invoke the action using the "action" attribute
+  return <form action={create}>...</form>;
+}
+```
+
+1. create server action:
+
+```ts
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
+import { z } from 'zod';
+import { sql } from './db';
+
+/*
+  export type Invoice = {
+    id: string;
+    customer_id: string;
+    amount: number;
+    date: string;  
+    status: 'pending' | 'paid';
+  };
+*/
+
+const FormSchema = z.object({
+  id: z.string(),
+  customerId: z.string(),
+  amount: z.coerce.number(),
+  status: z.enum(['pending', 'paid']),
+  date: z.string(),
+});
+
+const CreateInvoice = FormSchema.omit({ id: true, date: true });
+
+export async function createInvoice(formData: FormData) {
+  const { customerId, amount, status } = CreateInvoice.parse({
+    customerId: formData.get('customerId'),
+    amount: Number(formData.get('amount')),
+    status: formData.get('status'),
+  });
+
+  const amountInCents = amount * 100;
+  const date = new Date().toISOString().split('T')[0];
+
+  await sql`
+    INSERT INTO invoices (customer_id, amount, status, date)
+    VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+  `;
+
+  revalidatePath('/dashboard/invoices');
+  redirect('/dashboard/invoices');
+}
+```
+
+2. invoke the action using the "action" attribute:
+
+```tsx
+// ...
+  return (
+    <form action={createInvoice}>
+    </form>
+  );
+// ...
+```
+
+### Update Invoice Example
+
+1. Create a new dynamic route segment with the invoice `id`. (`/dashboard/invoices/[id]/edit/`)
+2. Read the invoice `id` from the page params.
+3. Fetch the specific invoice from the database.
+4. Pre-populate the form with the invoice data.
+5. Update the invoice data in your database.
+
+updateInvoice action:
+
+```ts
+const UpdateInvoice = FormSchema.omit({ id: true, date: true });
+
+export async function updateInvoice(id: string, formData: FormData) {
+  const { customerId, amount, status } = UpdateInvoice.parse({
+    customerId: formData.get('customerId'),
+    amount: formData.get('amount'),
+    status: formData.get('status'),
+  });
+
+  const amountInCents = amount * 100;
+
+  await sql`
+    UPDATE invoices
+    SET
+      customer_id = ${customerId},
+      amount = ${amountInCents},
+      status = ${status}
+    WHERE
+      id = ${id}
+  `;
+
+  revalidatePath('/dashboard/invoices');
+  redirect('/dashboard/invoices');
+}
+```
