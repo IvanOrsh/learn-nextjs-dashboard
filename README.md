@@ -604,4 +604,212 @@ Some accessibility considerations:
 - `id="customer-error"`: This id attribute uniquely identifies the HTML element that holds the error message for the select input. This is necessary for aria-describedby to establish the relationship.
 - `aria-live="polite"`: The screen reader should politely notify the user when the error inside the div is updated. When the content changes (e.g. when a user corrects an error), the screen reader will announce these changes, but only when the user is idle so as not to interrupt them.
 
-##
+## 9. Auth with `next-auth`
+
+1. Create login route
+
+/login/page.tsx:
+
+```tsx
+import AcmeLogo from '@/app/ui/acme-logo';
+import LoginForm from '@/app/ui/login-form';
+ 
+export default function LoginPage() {
+  return (
+    <main className="flex items-center justify-center md:h-screen">
+      <div className="relative mx-auto flex w-full max-w-[400px] flex-col space-y-2.5 p-4 md:-mt-32">
+        <div className="flex h-20 w-full items-end rounded-lg bg-blue-500 p-3 md:h-36">
+          <div className="w-32 text-white md:w-36">
+            <AcmeLogo />
+          </div>
+        </div>
+        <LoginForm />
+      </div>
+    </main>
+  );
+}
+```
+
+2. Set up `next-auth`
+   1. Install `next-auth`:  `npm install next-auth@beta`
+   2. generate a secret key for you app: `openssl rand -base64 32`
+   3. put this key in `.env`: `AUTH_SECRET=secret_key`
+
+3. Add the pages option:
+
+`auth.config.ts`:
+
+```ts
+import type { NextAuthConfig } from 'next-auth';
+ 
+export const authConfig = {
+  pages: {
+    signIn: '/login',
+  },
+};
+```
+You can use the `pages` option to **specify the route for custom sign-in, sign-out, and error pages**.
+
+4. Protect your routes with Next.js Middleware
+
+Add logic to protect your routes:
+
+auth.config.ts:
+
+```ts
+import type { NextAuthConfig } from 'next-auth';
+ 
+export const authConfig = {
+  pages: {
+    signIn: '/login',
+  },
+  callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
+      if (isOnDashboard) {
+        if (isLoggedIn) return true;
+        return false; // Redirect unauthenticated users to login page
+      } else if (isLoggedIn) {
+        return Response.redirect(new URL('/dashboard', nextUrl));
+      }
+      return true;
+    },
+  },
+  providers: [], // Add providers with an empty array for now
+} satisfies NextAuthConfig;
+```
+
+- `authorized` callback is used to verify if the request is authorized to access a page via Next.js Middleware.
+- `providers` option is an array where you list different login options.
+
+Import the `authConfig` object into a **Middleware** file.
+
+middlewares.ts:
+
+```ts
+import NextAuth from 'next-auth';
+import { authConfig } from './auth.config';
+ 
+export default NextAuth(authConfig).auth;
+ 
+export const config = {
+  // https://nextjs.org/docs/app/building-your-application/routing/middleware#matcher
+  matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
+};
+```
+
+5. Password hashing
+
+Before storing passwords in your database, you need to hash them.
+
+auth.ts
+
+```ts
+import NextAuth from 'next-auth';
+import { authConfig } from './auth.config';
+ 
+export const { auth, signIn, signOut } = NextAuth({
+  ...authConfig,
+});
+```
+
+6. Adding the Credentials provider
+
+auth.ts:
+
+```ts
+import NextAuth from 'next-auth';
+import { authConfig } from './auth.config';
+import Credentials from 'next-auth/providers/credentials';
+ 
+export const { auth, signIn, signOut } = NextAuth({
+  ...authConfig,
+  providers: [Credentials({})],
+});
+```
+
+The Credentials provider allows users to log in with a username and a password.
+
+7. Adding the sign in functionality
+
+You can `authorize` function tto handle authentication logic.
+
+auth.ts:
+
+```ts
+import NextAuth from 'next-auth';
+import { authConfig } from './auth.config';
+import Credentials from 'next-auth/providers/credentials';
+import { z } from 'zod';
+ 
+export const { auth, signIn, signOut } = NextAuth({
+  ...authConfig,
+  providers: [
+    Credentials({
+      async authorize(credentials) {
+        const parsedCredentials = z
+          .object({ email: z.string().email(), password: z.string().min(6) })
+          .safeParse(credentials);
+      },
+    }),
+  ],
+});
+```
+
+After validating the credentials, create a new `getUser` function that queries the user from the database:
+
+```ts
+import type { User } from '@/lib/definitions';
+import { sql } from '@/lib/server/db';
+import NextAuth from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
+import { z } from 'zod';
+import { authConfig } from './auth.config';
+
+async function getUser(email: string): Promise<User | undefined> {
+  try {
+    const user = await sql<User>`SELECT * FROM users WHERE email=${email}`;
+    return user.rows[0];
+  } catch (error) {
+    console.error('Failed to fetch user:', error);
+    throw new Error('Failed to fetch user');
+  }
+}
+
+export const { auth, signIn, signOut } = NextAuth({
+  ...authConfig,
+  providers: [
+    Credentials({
+      async authorize(credentials) {
+        const parsedCredentials = z
+          .object({
+            email: z.string().email(),
+            password: z.string().min(6),
+          })
+          .safeParse(credentials);
+
+        if (parsedCredentials.success) {
+          const { email, password } = parsedCredentials.data;
+          const user = await getUser(email);
+          if (!user) {
+            return null;
+          }
+
+          const passwordMatch = await Bun.password.verify(
+            user.password,
+            password,
+          );
+          if (passwordMatch) {
+            return user;
+          }
+        }
+
+        return null;
+      },
+    }),
+  ],
+});
+```
+
+8. Update the login form
