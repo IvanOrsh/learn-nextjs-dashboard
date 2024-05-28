@@ -1,3 +1,4 @@
+import bcrypt from 'bcrypt';
 import { Client } from 'pg';
 import {
   customers,
@@ -24,10 +25,7 @@ async function seedUsers(client: Client) {
     // Insert data into the "users" table
     const insertedUsers = await Promise.all(
       users.map(async (user) => {
-        const hashedPassword = await Bun.password.hash(user.password, {
-          algorithm: 'argon2d',
-          timeCost: 2,
-        });
+        const hashedPassword = await bcrypt.hash(user.password, 1);
 
         return client.query(
           `
