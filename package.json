@@ -5,6 +5,7 @@
     "db:dev:drop": "bun run scripts/drop-tables.ts",
     "db:dev:seed": "bun run scripts/seed.ts",
     "dev": "next dev",
+    "lint": "next lint",
     "prettier": "prettier --write --ignore-unknown .",
     "prettier:check": "prettier --check --ignore-unknown .",
     "start": "next start"

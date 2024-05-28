@@ -481,4 +481,127 @@ export default function NotFound() {
 }
 ```
 
-## 
+## 8. Form validation (server-side validation)
+
+1. In our component (form):
+   1. `"use client";` directive
+   2. import `useFormState` from `react-dom`. This hook:
+      1. takes 2 arguments: action, initial state
+      2. returns two value `[state, dispatch]` - the form state and a dispatch function
+```tsx
+// ...
+import { useFormState } from 'react-dom';
+ 
+export default function Form({ customers }: { customers: CustomerField[] }) {
+  const [state, dispatch] = useFormState(createInvoice, initialState);
+ 
+  return <form action={dispatch}>...</form>;
+}
+```
+
+2. in our action file:
+
+update schema:
+
+```ts
+const FormSchema = z.object({
+  id: z.string(),
+  customerId: z.string({
+    invalid_type_error: 'Please select a customer.',
+  }),
+  amount: z.coerce
+    .number()
+    .gt(0, { message: 'Please enter an amount greater than $0.' }),
+  status: z.enum(['pending', 'paid'], {
+    invalid_type_error: 'Please select an invoice status.',
+  }),
+  date: z.string(),
+});
+```
+
+update `createInvoice` action to accept two parameters:
+
+```ts
+// This is temporary until @types/react-dom is updated
+export type State = {
+  errors?: {
+    customerId?: string[];
+    amount?: string[];
+    status?: string[];
+  };
+  message?: string | null;
+};
+ 
+export async function createInvoice(prevState: State, formData: FormData) {
+  // ...
+}
+```
+
+- `formData`
+- `prevState` - contains the state passed from the `useFormState` hook. It's a required prop.
+
+change the Zod `parse()` to `safeParse()`:
+
+```ts
+export async function createInvoice(prevState: State, formData: FormData) {
+  // Validate form fields using Zod
+  const validatedFields = CreateInvoice.safeParse({
+    customerId: formData.get('customerId'),
+    amount: formData.get('amount'),
+    status: formData.get('status'),
+  });
+ 
+  // ...
+}
+```
+
+`safeParse()` will return an object containing a `success` or `error` field.
+
+```ts
+export async function createInvoice(prevState: State, formData: FormData) {
+  // Validate form using Zod
+  const validatedFields = CreateInvoice.safeParse({
+    customerId: formData.get('customerId'),
+    amount: formData.get('amount'),
+    status: formData.get('status'),
+  });
+ 
+  // If form validation fails, return errors early. Otherwise, continue.
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: 'Missing Fields. Failed to Create Invoice.',
+    };
+  }
+ 
+  // Prepare data for insertion into the database
+  const { customerId, amount, status } = validatedFields.data;
+  const amountInCents = amount * 100;
+  const date = new Date().toISOString().split('T')[0];
+ 
+  // Insert data into the database
+  try {
+    await sql`
+      INSERT INTO invoices (customer_id, amount, status, date)
+      VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
+    `;
+  } catch (error) {
+    // If a database error occurs, return a more specific error.
+    return {
+      message: 'Database Error: Failed to Create Invoice.',
+    };
+  }
+ 
+  // Revalidate the cache for the invoices page and redirect the user.
+  revalidatePath('/dashboard/invoices');
+  redirect('/dashboard/invoices');
+}
+```
+
+Some accessibility considerations:
+
+- `aria-describedby="customer-error"`: This establishes a relationship between the select element and the error message container. It indicates that the container with `id="customer-error"` describes the select element. Screen readers will read this description when the user interacts with the select box to notify them of errors.
+- `id="customer-error"`: This id attribute uniquely identifies the HTML element that holds the error message for the select input. This is necessary for aria-describedby to establish the relationship.
+- `aria-live="polite"`: The screen reader should politely notify the user when the error inside the div is updated. When the content changes (e.g. when a user corrects an error), the screen reader will announce these changes, but only when the user is idle so as not to interrupt them.
+
+##
