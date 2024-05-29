@@ -1,7 +1,6 @@
 'use client';
 
 import { CustomerField, InvoiceForm } from '@/lib/definitions';
-import { Button } from '@/ui/button';
 import {
   CheckIcon,
   ClockIcon,
@@ -10,6 +9,7 @@ import {
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { useFormState } from 'react-dom';
+import SubmitButton from '../submit-button';
 import { updateInvoice } from './actions';
 import { FormErrorMessage } from './form-error-message';
 
@@ -138,7 +138,7 @@ export default function EditInvoiceForm({
         >
           Cancel
         </Link>
-        <Button type="submit">Edit Invoice</Button>
+        <SubmitButton>Edit Invoice</SubmitButton>
       </div>
     </form>
   );
