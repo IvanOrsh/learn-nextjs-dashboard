@@ -10,7 +10,6 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
 
-      console.log(isLoggedIn);
       if (isOnDashboard) {
         return isLoggedIn;
       } else if (isLoggedIn) {

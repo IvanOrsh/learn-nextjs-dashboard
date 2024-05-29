@@ -6,6 +6,11 @@ import Pagination from '@/ui/invoices/pagination';
 import Table from '@/ui/invoices/table';
 import Search from '@/ui/search';
 import { InvoicesTableSkeleton } from '@/ui/skeletons';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Invoices',
+};
 
 export default async function Page({
   searchParams,

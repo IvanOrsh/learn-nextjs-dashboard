@@ -1,5 +1,11 @@
 import AcmeLogo from '@/ui/acme-logo';
 import LoginForm from '@/ui/login-form';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Login',
+  description: 'Login to the Acme Dashboard and manage your invoices',
+};
 
 export default function LoginPage() {
   return (

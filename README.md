@@ -912,3 +912,18 @@ export default function LoginForm() {
   - `opengraph-image.jpg`, `twitter-image.jpg`: employed for social media
   - `robots.txt`: provides instructions for search engine crawling
   - `sitemap.xml`: provides a list of URLs to be indexed by search engines (website structure)
+  
+Example:
+
+```tsx
+import { Metadata } from 'next';
+ 
+export const metadata: Metadata = {
+  title: {
+    template: '%s | Acme Dashboard',
+    default: 'Acme Dashboard',
+  },
+  description: 'The official Next.js Learn Dashboard built with App Router.',
+  metadataBase: new URL('https://next-learn-dashboard.vercel.sh'),
+};
+```
