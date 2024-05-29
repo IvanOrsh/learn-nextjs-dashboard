@@ -685,7 +685,7 @@ export const authConfig = {
 
 Import the `authConfig` object into a **Middleware** file.
 
-middlewares.ts:
+middlewares.ts - **BY CONVENTION, IT SHOULD LIVE IN ROOT FOLDER OR `src`**:
 
 ```ts
 import NextAuth from 'next-auth';
@@ -813,3 +813,102 @@ export const { auth, signIn, signOut } = NextAuth({
 ```
 
 8. Update the login form
+
+server actions:
+
+```ts
+'use server';
+
+import { signIn } from '@/lib/auth';
+import { AuthError } from 'next-auth';
+
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData,
+) {
+  try {
+    await signIn('credentials', formData);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      switch (error.type) {
+        case 'CredentialsSignin':
+          return 'Invalid credentials.';
+        default:
+          return 'Something went wrong.';
+      }
+    }
+    throw error;
+  }
+}
+
+```
+
+and then update the login form:
+
+```tsx
+// ...
+import { useFormState, useFormStatus } from 'react-dom';
+import { authenticate } from '@/app/lib/actions';
+ 
+export default function LoginForm() {
+  const [errorMessage, dispatch] = useFormState(authenticate, undefined);
+ 
+  return (
+    <form action={dispatch} className="space-y-3">
+    {/* ... */}
+    </form>
+  );
+}
+```
+
+## 10. Metadata
+
+### 10.1 Intro
+
+- provides additional details about a webpage
+- not visible to the users visiting the page
+- usually embedded within the page's HTML, usually the `head` element.
+- crucial for search engines and other systems that need to understand you webpage's content better.
+
+### 10.2 Types of metadata:
+
+1. Title Metadata: Responsible for the title of a webpage that is displayed on the browser tab. It's crucial for SEO as it helps search engines understand what the webpage is about.
+
+```html
+<title>Page Title</title>
+```
+
+2. Description Metadata: This metadata provides a brief overview of the webpage content and is often displayed in search engine results.
+
+```html
+<meta name="description" content="A brief description of the page content." />
+```
+
+3. Keyword Metadata: This metadata includes the keywords related to the webpage content, helping search engines index the page.
+
+```html
+<meta name="keywords" content="keyword1, keyword2, keyword3" />
+```
+
+4. Open Graph Metadata: This metadata enhances the way a webpage is represented when shared on social media platforms, providing information such as the title, description, and preview image.
+
+```html
+<meta property="og:title" content="Title Here" />
+<meta property="og:description" content="Description Here" />
+<meta property="og:image" content="image_url_here" />
+```
+
+5. Favicon Metadata: This metadata links the favicon (a small icon) to the webpage, displayed in the browser's address bar or tab.
+
+```html
+<link rel="icon" href="path/to/favicon.ico" />
+```
+
+### 10.3 Adding metadata
+
+- Config based: Export a static metadata object or a dynamic `generateMetadata` function ina a `layout` or `page` file
+- File-based:
+  - `favicon.ico`, etc,: utilized for favicons and icons
+  - `opengraph-image.jpg`, `twitter-image.jpg`: employed for social media
+  - `robots.txt`: provides instructions for search engine crawling
+  - `sitemap.xml`: provides a list of URLs to be indexed by search engines (website structure)
