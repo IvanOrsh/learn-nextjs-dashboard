@@ -1,5 +1,5 @@
-import bcrypt from 'bcrypt';
 import { Client } from 'pg';
+import { hashPassword } from "../src/lib/crypto";
 import {
   customers,
   invoices,
@@ -25,7 +25,7 @@ async function seedUsers(client: Client) {
     // Insert data into the "users" table
     const insertedUsers = await Promise.all(
       users.map(async (user) => {
-        const hashedPassword = await bcrypt.hash(user.password, 1);
+        const hashedPassword = await hashPassword(user.password);
 
         return client.query(
           `

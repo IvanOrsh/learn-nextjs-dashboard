@@ -1,6 +1,6 @@
+import { matchPassword } from "@/lib/crypto";
 import type { User } from '@/lib/definitions';
 import { sql } from '@/lib/server/db';
-import bcrypt from 'bcrypt';
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { z } from 'zod';
@@ -35,7 +35,7 @@ export const { auth, signIn, signOut } = NextAuth({
             return null;
           }
 
-          const passwordMatch = await bcrypt.compare(password, user.password);
+          const passwordMatch = await matchPassword(password, user.password);
           if (passwordMatch) {
             return user;
           }
