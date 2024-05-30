@@ -3,7 +3,7 @@ import LoginForm from '@/ui/login-form';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Login',
+  title: 'Log in',
   description: 'Login to the Acme Dashboard and manage your invoices',
 };
 
