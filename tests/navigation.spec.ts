@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test';
+import { loggedInCredentials } from './credentials';
 
-test('navigation smoke test', async ({ page }) => {
+test('guest navigation smoke test', async ({ page }) => {
   await page.goto('/');
 
   // Expect a title "to contain" a substring.
@@ -16,4 +17,18 @@ test('navigation smoke test', async ({ page }) => {
   await expect(
     page.getByRole('heading', { level: 1, name: 'Log in' }),
   ).toBeVisible();
+});
+
+test.describe('authorized user', () => {
+  test.use({ storageState: loggedInCredentials });
+
+  test('navigation smoke test', async ({ page }) => {
+    await page.goto('/dashboard');
+
+    // Expect a title "to contain" a substring.
+    await expect(page).toHaveTitle(/Acme Dashboard/);
+    await expect(
+      page.getByRole('heading', { level: 1, name: /Dashboard/ }),
+    ).toBeVisible();
+  });
 });
