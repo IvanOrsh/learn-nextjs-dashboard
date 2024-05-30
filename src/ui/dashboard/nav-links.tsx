@@ -35,6 +35,7 @@ export default function NavLinks() {
         const LinkIcon = link.icon;
         return (
           <Link
+            aria-label={link.name}
             key={link.name}
             href={link.href}
             className={clsx(
