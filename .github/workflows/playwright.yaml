@@ -27,6 +27,12 @@ jobs:
           bun install
           bunx playwright install chromium
 
+      - name: Setup environment variables
+        run: |
+          echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> .env.local
+          echo "DATABASE_URL=${{ vars.POSTGRES_URL}}" >> .env.local
+          echo "AUTH_URL=${{ vars.AUTH_URL}}" >> .env.local
+
       # Push schema to database
       - name: Push schema to database
         run: bun run ./scripts/seed.ts
