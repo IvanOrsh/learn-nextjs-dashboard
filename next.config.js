@@ -5,6 +5,11 @@ const nextConfig = {
   // },
   images: {
     formats: ['image/avif', 'image/webp'],
+    domains: [
+      'localhost',
+      'avatars.githubusercontent.com',
+      'cloudflare-ipfs.com',
+    ],
   },
 };
 
