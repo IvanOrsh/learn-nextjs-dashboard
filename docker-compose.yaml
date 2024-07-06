@@ -1,12 +1,28 @@
 version: '3.9'
 services:
   acme-db:
+    container_name: acme-db
     image: postgres
     restart: always
-    container_name: acme-db
     ports:
       - 5435:5432
     environment:
       POSTGRES_DB: acme
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'admin', '-d', 'acme']
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    command:
+      [
+        'sh',
+        '-c',
+        'chown -R postgres:postgres /var/lib/postgresql/data && docker-entrypoint.sh postgres',
+      ]
+
+volumes:
+  pgdata: {}

@@ -9,6 +9,8 @@
     "prettier": "prettier --write --ignore-unknown .",
     "prettier:check": "prettier --check --ignore-unknown .",
     "start": "next start",
+    "start:docker:dev": "docker-compose -f docker-compose.dev.yml up --build",
+    "stop:docker:dev": "docker-compose -f docker-compose.dev.yml down -v",
     "test:e2e": "playwright test"
   },
   "dependencies": {

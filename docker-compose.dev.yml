@@ -1,0 +1,53 @@
+# docker-compose.dev.yml
+version: '3.9'
+services:
+  acme-db:
+    container_name: acme-db
+    image: postgres
+    restart: always
+    ports:
+      - 5435:5432 # Host:Container
+    environment:
+      POSTGRES_DB: acme
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'admin', '-d', 'acme']
+      interval: 5s
+      timeout: 10s
+      retries: 5
+    command:
+      [
+        'sh',
+        '-c',
+        'chown -R postgres:postgres /var/lib/postgresql/data && docker-entrypoint.sh postgres',
+      ]
+
+  acme-dashboard:
+    container_name: acme-dashboard
+    build:
+      context: .
+      dockerfile: ./docker/dev.Dockerfile
+    # Set environmant variables based on the .env.local
+    env_file:
+      - .env
+    # Set environment variabels variables directly in the docker-compose file
+    environment:
+      POSTGRES_HOST: acme-db
+      POSTGRES_DB: acme
+      POSTGRES_USER: admin
+      POSTGRES_PORT: 5432 # Internal container port
+      POSTGRES_PASSWORD: password
+      POSTGRES_URL: postgresql://admin:password@acme-db:5432/acme?schema=public
+    depends_on:
+      acme-db:
+        condition: service_healthy
+    volumes:
+      - .:/app/acme-dashboard
+    restart: always
+    ports:
+      - 3000:3000
+volumes:
+  pgdata: {}

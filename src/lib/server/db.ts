@@ -3,14 +3,14 @@ import { Client } from 'pg';
 import config from './config';
 
 export function getClient(): Client {
-  let sslmode = '';
+  // let sslmode = '';
 
-  if (config.ENV === 'production') {
-    sslmode = '?sslmode=require';
-  }
+  // if (config.ENV === 'production') {
+  //   sslmode = '?sslmode=require';
+  // }
 
   const client = new Client({
-    connectionString: config.POSTGRES_URL + sslmode,
+    connectionString: config.POSTGRES_URL /* + sslmode */,
   });
 
   return client;
@@ -30,10 +30,20 @@ export async function sql<T>(
 ): Promise<{ rows: T[]; rowCount: number; command: string; oid: number }> {
   const client = getClient();
 
-  await client.connect();
-  const query = sqlQuery(strings, ...values);
-  const res = await client.query(query.text, query.values);
-  await client.end();
+  try {
+    await client.connect();
+    const query = sqlQuery(strings, ...values);
+    const res = await client.query(query.text, query.values);
+    await client.end();
 
-  return res;
+    return {
+      rows: res.rows,
+      rowCount: res.rowCount || 0,
+      command: res.command,
+      oid: res.oid,
+    };
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Database Error');
+  }
 }

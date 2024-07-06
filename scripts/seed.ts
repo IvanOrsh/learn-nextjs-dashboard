@@ -1,12 +1,28 @@
+import config from '../src/lib/server/config';
 import { Client } from 'pg';
-import { hashPassword } from "../src/lib/crypto";
+import { hashPassword } from '../src/lib/crypto';
 import {
   customers,
   invoices,
   revenue,
   users,
 } from '../src/lib/placeholder-data';
-import { getClient } from '../src/lib/server/db';
+
+export function getClient(): Client {
+  // let sslmode = '';
+
+  // if (config.ENV === 'production') {
+  //   sslmode = '?sslmode=require';
+  // }
+
+  const client = new Client({
+    connectionString: config.POSTGRES_URL /* + sslmode */,
+  });
+
+  return client;
+}
+
+const client = getClient();
 
 async function seedUsers(client: Client) {
   try {
@@ -172,9 +188,7 @@ async function seedRevenue(client: Client) {
     throw error;
   }
 }
-
 async function main() {
-  const client = getClient();
   await client.connect();
 
   await seedUsers(client);
@@ -190,4 +204,9 @@ main().catch((err) => {
     'An error occurred while attempting to seed the database:',
     err,
   );
+  console.log({
+    config,
+  });
+
+  process.exit(1);
 });
