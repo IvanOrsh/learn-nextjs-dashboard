@@ -45,8 +45,10 @@ jobs:
 
       - name: seed database
         run: bun run ./scripts/seed.ts
-      - name: run app
-        run: pnpm exec next build && pnpm exec next start & sleep 10
+      - name: build
+        run: pnpm exec next build
+      - name: start
+        run: pnpm exec next start & sleep 20
       - name: Run Playwright tests
         run: pnpm exec playwright test
 
