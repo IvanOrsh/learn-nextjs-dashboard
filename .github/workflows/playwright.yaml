@@ -8,6 +8,15 @@ jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
+    env:
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5435
+      POSTGRES_DB: acme
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+      POSTGRES_URL: 'postgresql://admin:password@localhost:5435/acme'
+      AUTH_SECRET: 'PDHygEY6FY4El+blZ4p9LIWiV/dw21ucS9QKf7EykxE='
+      AUTH_URL: 'http://localhost:3000/'
     services:
       acme-db:
         image: postgres
@@ -19,28 +28,31 @@ jobs:
           POSTGRES_PASSWORD: password
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
       - uses: oven-sh/setup-bun@v2
-
-      # Install dependencies and playwright binaries
-      - name: Install dependencies and playwright binaries
-        run: |
-          bun install
-          bunx playwright install chromium
+      - name: Install dependencies
+        run: npm install -g pnpm && pnpm install
+      - name: Install Playwright Browsers
+        run: pnpm exec playwright install --with-deps
 
       - name: Setup environment variables
         run: |
-          echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> .env.local
-          echo "POSTGRES_URL=${{ vars.POSTGRES_URL}}" >> .env.local
-          echo "AUTH_URL=${{ vars.AUTH_URL}}" >> .env.local
+          echo "NEXTAUTH_SECRET=${{ env.AUTH_SECRET }}" >> .env.local
+          echo "POSTGRES_URL=${{ env.POSTGRES_URL }}" >> .env.local
+          echo "AUTH_URL=${{ env.AUTH_URL }}" >> .env.local
 
-      # Push schema to database
-      - name: Push schema to database
+      - name: seed database
         run: bun run ./scripts/seed.ts
-
-      # Run Application (optional, if needed for tests)
-      - name: Run Application
-        run: bun run dev & sleep 10
-
-      # Run Playwright tests
+      - name: run app
+        run: pnpm exec next dev
       - name: Run Playwright tests
-        run: bunx playwright test
+        run: pnpm exec playwright test
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 30
