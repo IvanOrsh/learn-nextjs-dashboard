@@ -46,8 +46,8 @@ jobs:
       - name: seed database
         run: bun run ./scripts/seed.ts
       - name: run app
-        run: pnpm exec next dev
-      - name: Run Playwright tests & sleep 20
+        run: pnpm exec next build && pnpm exec next start & sleep 10
+      - name: Run Playwright tests
         run: pnpm exec playwright test
 
       - uses: actions/upload-artifact@v3
