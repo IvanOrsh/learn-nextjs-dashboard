@@ -48,7 +48,7 @@ jobs:
       - name: run app
         run: pnpm exec next dev
       - name: Run Playwright tests
-        run: pnpm exec playwright test
+        run: pnpm exec playwright test & sleep 30
 
       - uses: actions/upload-artifact@v3
         if: always()
